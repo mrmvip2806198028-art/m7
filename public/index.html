@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>مصمم السيرفرات بالذكاء الاصطناعي</title>
+<style>
+:root{--bg:#f4f5fb;--card:#fff;--tx:#1c1d2b;--mut:#6b6e85;--pri:#5865f2;--bd:#e2e4f0;--chip:#eceefd}
+@media (prefers-color-scheme:dark){:root{--bg:#15161f;--card:#1f2130;--tx:#eceefc;--mut:#9a9db8;--bd:#2d3047;--chip:#2a2d4a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:Tahoma,"Segoe UI",system-ui,sans-serif;line-height:1.6}
+main{max-width:720px;margin:0 auto;padding:16px}
+h1{font-size:22px;margin:8px 0 4px}
+.sub{color:var(--mut);margin:0 0 12px;font-size:14px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px;margin-bottom:12px}
+textarea{width:100%;min-height:76px;border:1px solid var(--bd);border-radius:12px;padding:10px;background:var(--bg);color:var(--tx);font:inherit;resize:vertical}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.chip,.tab{background:var(--chip);color:var(--tx);border:0;border-radius:20px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
+.tab.on{background:var(--pri);color:#fff}
+.btn{background:var(--pri);color:#fff;border:0;border-radius:12px;padding:10px 16px;font:inherit;font-weight:bold;cursor:pointer;width:100%}
+.btn.sm{width:auto;padding:6px 12px;font-size:13px;font-weight:normal}
+.btn.alt{background:var(--chip);color:var(--tx)}
+.btn:disabled{opacity:.5}
+.row{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.role{display:inline-flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--bd);border-radius:20px;padding:3px 10px;margin:3px;font-size:13px}
+.dot{width:10px;height:10px;border-radius:50%}
+.cat{margin-top:10px}.cat b{font-size:13px;color:var(--mut)}
+.ch{padding:2px 8px;font-size:14px;direction:ltr;text-align:right}
+.logo{display:block;width:180px;height:180px;margin:10px auto;border-radius:24px;background:var(--bg)}
+.id{font-size:34px;letter-spacing:6px;font-weight:bold;text-align:center;direction:ltr;margin:6px 0;color:var(--pri)}
+.err{color:#d33;font-size:14px}
+.hide{display:none}
+</style>
+</head>
+<body>
+<main>
+<h1>🛠️ مصمم السيرفرات بالذكاء الاصطناعي</h1>
+<p class="sub">قول عايز تعمل سيرفر ايه، وهيطلعلك ID قصير تكتبه في ديسكورد.</p>
+
+<div class="card">
+  <div style="margin-bottom:10px"><button class="tab on" id="tFull">سيرفر كامل</button> <button class="tab" id="tImg">صورة / لوجو بس</button></div>
+  <b id="q">عايز تعمل سيرفر ايه؟</b>
+  <textarea id="inp" placeholder="مثلا: سيرفر فايف إم رول بلاي مصري"></textarea>
+  <div class="chips" id="chips"></div>
+  <button class="btn" id="go">اعمللي السيرفر</button>
+  <div class="err" id="err"></div>
+</div>
+
+<div id="out" class="hide">
+  <div class="card" style="text-align:center">
+    <b id="sname"></b>
+    <p id="sdesc" class="sub"></p>
+    <div class="sub" style="margin:0">اكتب في ديسكورد: <span dir="ltr">/code</span> وبعده الـ ID</div>
+    <div class="id" id="sid"></div>
+    <button class="btn" id="copyId">نسخ الـ ID</button>
+  </div>
+  <div class="card"><b>الرتب</b><div id="roles"></div></div>
+  <div class="card"><b>الكاتيجوريز والرومات</b><div id="cats"></div></div>
+  <button class="btn alt" id="logoBtn" style="margin-bottom:12px">🎨 اعمل لوجو للسيرفر</button>
+</div>
+
+<div id="logoCard" class="card hide">
+  <b>اللوجو</b>
+  <img id="logo" class="logo" alt="logo">
+  <button class="btn alt" id="logoAgain">اعمل واحد تاني</button>
+</div>
+</main>
+
+<script>
+(function(){
+var $=function(i){return document.getElementById(i)};
+var mode="full",data=null;
+["سيرفر فايف إم رول بلاي","سيرفر العاب","سيرفر دراسة","سيرفر متجر","سيرفر مجتمع عام"].forEach(function(t){
+  var b=document.createElement("button");b.className="chip";b.textContent=t;b.onclick=function(){$("inp").value=t};$("chips").appendChild(b)});
+
+function setMode(m){
+  mode=m;$("tFull").className="tab"+(m==="full"?" on":"");$("tImg").className="tab"+(m==="img"?" on":"");
+  $("q").textContent=m==="full"?"عايز تعمل سيرفر ايه؟":"عايز صورة ايه؟";
+  $("go").textContent=m==="full"?"اعمللي السيرفر":"اعمللي الصورة";
+}
+$("tFull").onclick=function(){setMode("full")};
+$("tImg").onclick=function(){setMode("img")};
+
+async function post(url,body){
+  var r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  var j=await r.json();
+  if(!r.ok)throw new Error(j.error||"حصلت مشكلة");
+  return j;
+}
+function showLogo(svg){
+  $("logo").src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg);
+  $("logoCard").className="card";
+}
+function render(id,d){
+  data=d;
+  $("sname").textContent=d.name;$("sdesc").textContent=d.description||"";$("sid").textContent=id;
+  var r=$("roles");r.innerHTML="";
+  (d.roles||[]).forEach(function(x){
+    var s=document.createElement("span");s.className="role";
+    var i=document.createElement("i");i.className="dot";i.style.background=/^#[0-9a-f]{3,8}$/i.test(x.color)?x.color:"#888";
+    s.appendChild(i);s.appendChild(document.createTextNode(x.name));r.appendChild(s);
+  });
+  var c=$("cats");c.innerHTML="";
+  (d.categories||[]).forEach(function(k){
+    var w=document.createElement("div");w.className="cat";
+    var h=document.createElement("b");h.textContent=String(k.name).toUpperCase();w.appendChild(h);
+    (k.channels||[]).forEach(function(ch){
+      var e=document.createElement("div");e.className="ch";
+      e.textContent=(ch.type==="voice"?"🔊 ":"# ")+ch.name;w.appendChild(e);
+    });
+    c.appendChild(w);
+  });
+  $("out").className="";$("logoCard").className="card hide";
+}
+$("copyId").onclick=async function(){
+  var b=this,old=b.textContent;
+  try{await navigator.clipboard.writeText($("sid").textContent)}catch(e){}
+  b.textContent="اتنسخ ✓";setTimeout(function(){b.textContent=old},1400);
+};
+
+$("go").onclick=async function(){
+  var text=$("inp").value.trim(),b=this,label=b.textContent;$("err").textContent="";
+  if(!text){$("err").textContent="اكتب الأول عايز ايه";return}
+  b.disabled=true;b.textContent="استنى شوية...";
+  try{
+    if(mode==="full"){var j=await post("/api/server",{text:text});render(j.id,j.data)}
+    else{$("out").className="hide";showLogo((await post("/api/logo",{text:text})).svg)}
+  }catch(e){$("err").textContent=e.message}
+  b.disabled=false;b.textContent=label;
+};
+async function logo(){
+  var b=$("logoBtn");b.disabled=true;$("err").textContent="";
+  try{showLogo((await post("/api/logo",{text:"اسم السيرفر: "+data.name+" — "+(data.description||"")+" — "+$("inp").value})).svg)}
+  catch(e){$("err").textContent=e.message}
+  b.disabled=false;
+}
+$("logoBtn").onclick=logo;
+$("logoAgain").onclick=function(){data?logo():$("go").onclick()};
+})();
+</script>
+</body>
+</html>
